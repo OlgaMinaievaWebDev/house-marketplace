@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import arrowRightIcon from "../assets/svg/keyboardArrowRightIcon.svg";
@@ -29,7 +30,7 @@ function SignIn() {
         navigate("/");
       }
     } catch (error) {
-      console.log(error);
+      toast.error("Bad user credential");
     }
   };
 
