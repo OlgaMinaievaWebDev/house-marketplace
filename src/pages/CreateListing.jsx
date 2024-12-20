@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../components/Spinner";
+import { toast } from "react-toastify";
 
 function CreateListing() {
   const [geolocationEnabled, setGeolocationEnabled] = useState(false);
@@ -58,9 +59,117 @@ function CreateListing() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMounted]);
 
-  const onSubmit = (e) => {
+  // const onSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   if (discountedPrice >= regularPrice) {
+  //     setLoading(false);
+  //     toast.error("Discounted price needs to be less than regular price");
+  //     return;
+  //   }
+  //   if (images.length > 6) {
+  //     setLoading(false);
+  //     toast.error("Max 6 images");
+  //     return;
+  //   }
+
+  //   let geolocation = {};
+  //   let location;
+
+  //   if (geolocationEnabled) {
+  //     try {
+  //       const response = await fetch(
+  //         `http://api.positionstack.com/v1/forward?access_key=4679f40c5fcefb09d8939c9aa5c0c195&query=${address}`
+  //       );
+  //       if (!response) {
+  //         toast.error("Failed to fetch");
+  //       }
+
+  //       const data = await response.json();
+
+  //       if (data.total_results === 0) {
+  //         setLoading(false);
+  //         toast.error("Address not found");
+  //         return;
+  //       }
+
+  //       geolocation.lat = data.results[0]?.geometry.lat ?? 0;
+  //       geolocation.lng = data.results[0]?.geometry.lng ?? 0;
+  //       location =
+  //         data.total_results === 0 ? undefined : data.results[0]?.formatted;
+
+  //       if (location === undefined || location.includes("undefined")) {
+  //         setLoading(false);
+  //         toast.error("Address not found. Please enter a valid address.");
+  //         return;
+  //       }
+  //     } catch (error) {
+  //       console.log(error);
+  //       setLoading(false);
+  //       toast.error("Unable to fetch location");
+  //     }
+  //   }
+  // };
+
+  const onSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+    setLoading(true);
+
+    if (discountedPrice >= regularPrice) {
+      setLoading(false);
+      toast.error("Discounted price needs to be less than regular price");
+      return;
+    }
+
+    if (images.length > 6) {
+      setLoading(false);
+      toast.error("Max 6 images");
+      return;
+    }
+
+    let geolocation = {};
+    let location;
+
+    if (geolocationEnabled) {
+      try {
+        const response = await fetch(
+          `http://api.positionstack.com/v1/forward?access_key=4679f40c5fcefb09d8939c9aa5c0c195&query=${encodeURIComponent(
+            address
+          )}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch geolocation data");
+        }
+
+        const data = await response.json();
+
+        if (data && data.results && data.results.length > 0) {
+          geolocation.lat = data.results[0]?.geometry?.lat || 0;
+          geolocation.lng = data.results[0]?.geometry?.lng || 0;
+          location = data.results[0]?.formatted || "Address not found";
+        } else {
+          setLoading(false);
+          toast.error("Address not found");
+          return;
+        }
+
+        if (location === "Address not found") {
+          setLoading(false);
+          toast.error("Invalid address. Please try again.");
+          return;
+        }
+      } catch (error) {
+        console.error("Error fetching geolocation:", error);
+        setLoading(false);
+        toast.error("Unable to fetch location. Please try again later.");
+        return;
+      }
+    }
+
+    // Proceed with the rest of the form submission logic
+    console.log("Geolocation:", geolocation);
+    setLoading(false);
   };
 
   const onMutate = (e) => {
@@ -92,6 +201,7 @@ function CreateListing() {
   if (loading) {
     return <Spinner />;
   }
+
   return (
     <div className="profile">
       <header>
@@ -99,7 +209,7 @@ function CreateListing() {
       </header>
       <main>
         <form onSubmit={onSubmit}>
-          <label className="formLabel"></label>
+          <label className="formLabel">Sell / Rent</label>
           <div className="formButtons">
             <button
               type="button"
@@ -117,7 +227,7 @@ function CreateListing() {
               value="rent"
               onClick={onMutate}
             >
-              Sell
+              Rent
             </button>
           </div>
 
@@ -132,6 +242,7 @@ function CreateListing() {
             minLength="10"
             required
           />
+
           <div className="formRooms flex">
             <div>
               <label className="formLabel">Bedrooms</label>
@@ -160,6 +271,7 @@ function CreateListing() {
               />
             </div>
           </div>
+
           <label className="formLabel">Parking spot</label>
           <div className="formButtons">
             <button
@@ -185,6 +297,7 @@ function CreateListing() {
               No
             </button>
           </div>
+
           <label className="formLabel">Furnished</label>
           <div className="formButtons">
             <button
@@ -210,6 +323,7 @@ function CreateListing() {
               No
             </button>
           </div>
+
           <label className="formLabel">Address</label>
           <textarea
             className="formInputAddress"
@@ -219,6 +333,7 @@ function CreateListing() {
             onChange={onMutate}
             required
           />
+
           {!geolocationEnabled && (
             <div className="formLatLng flex">
               <div>
@@ -245,6 +360,7 @@ function CreateListing() {
               </div>
             </div>
           )}
+
           <label className="formLabel">Offer</label>
           <div className="formButtons">
             <button
@@ -283,6 +399,7 @@ function CreateListing() {
             />
             {type === "rent" && <p className="formPriceText">$ / Month</p>}
           </div>
+
           {offer && (
             <>
               <label className="formLabel">Discounted Price</label>
@@ -298,6 +415,7 @@ function CreateListing() {
               />
             </>
           )}
+
           <label className="formLabel">Images</label>
           <p className="imagesInfo">
             The first image will be the cover (max 6).
