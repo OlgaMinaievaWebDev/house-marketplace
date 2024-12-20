@@ -5,7 +5,7 @@ import Spinner from "../components/Spinner";
 import { toast } from "react-toastify";
 
 function CreateListing() {
-  const [geolocationEnabled, setGeolocationEnabled] = useState(false);
+  const [geolocationEnabled, setGeolocationEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     type: "rent",
@@ -123,7 +123,7 @@ function CreateListing() {
 
     if (images.length > 6) {
       setLoading(false);
-      toast.error("Max 6 images");
+      toast.error("Max 6 images allowed");
       return;
     }
 
@@ -132,44 +132,45 @@ function CreateListing() {
 
     if (geolocationEnabled) {
       try {
-        const response = await fetch(
-          `http://api.positionstack.com/v1/forward?access_key=4679f40c5fcefb09d8939c9aa5c0c195&query=${encodeURIComponent(
-            address
-          )}`
-        );
+        const API_KEY = "4679f40c5fcefb09d8939c9aa5c0c195"; // Replace with your PositionStack API key
+        const url = `http://api.positionstack.com/v1/forward?access_key=${API_KEY}&query=${encodeURIComponent(
+          address
+        )}`;
 
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error("Failed to fetch geolocation data");
         }
 
         const data = await response.json();
 
-        if (data && data.results && data.results.length > 0) {
-          geolocation.lat = data.results[0]?.geometry?.lat || 0;
-          geolocation.lng = data.results[0]?.geometry?.lng || 0;
-          location = data.results[0]?.formatted || "Address not found";
+        if (data && data.data && data.data.length > 0) {
+          geolocation.lat = data.data[0].latitude || 0;
+          geolocation.lng = data.data[0].longitude || 0;
+          location = data.data[0].label || "Address not found";
         } else {
           setLoading(false);
           toast.error("Address not found");
           return;
         }
 
-        if (location === "Address not found") {
+        if (!location || location === "Address not found") {
           setLoading(false);
           toast.error("Invalid address. Please try again.");
           return;
         }
       } catch (error) {
-        console.error("Error fetching geolocation:", error);
+        console.error("Error fetching geolocation data:", error);
         setLoading(false);
         toast.error("Unable to fetch location. Please try again later.");
         return;
       }
     }
 
-    // Proceed with the rest of the form submission logic
     console.log("Geolocation:", geolocation);
     setLoading(false);
+
+    // Proceed with your form submission logic here
   };
 
   const onMutate = (e) => {
