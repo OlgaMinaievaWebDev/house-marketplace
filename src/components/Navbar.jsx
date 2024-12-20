@@ -17,7 +17,7 @@ function Navbar() {
           </li>
           <li className="navbarListItem" onClick={() => navigate("/offers")}>
             <img src={offerIcon} alt="Offer" width="36" height="36" />
-            <p>Offer</p>
+            <p>Offers</p>
           </li>
           <li className="navbarListItem" onClick={() => navigate("/profile")}>
             <img src={personOutlineIcon} alt="Profile" width="36" height="36" />
